@@ -12,7 +12,7 @@ A calendar heatmap component built on SVG, inspired by github's commit calendar 
 Install the npm module:
 
 ```bash
-npm install react-calendar-heatmap
+npm install react-cal-heatmap
 ```
 
 Include the default styles into your CSS by copying [src/styles.css](src/styles.css) into your repo, and customize away!

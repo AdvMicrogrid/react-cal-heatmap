@@ -1,6 +1,6 @@
 {
   "name": "react-cal-heatmap",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A calendar heatmap, forked from react-calendar-heatmap, with some added functionality.",
   "author": "Jason McGeeney <jason.mcgeeney@gmail.com>",
   "main": "./build/index.js",

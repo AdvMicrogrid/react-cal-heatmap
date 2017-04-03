@@ -1,8 +1,10 @@
 import React, { PropTypes } from 'react';
 import range from 'lodash.range';
 import reduce from 'lodash.reduce';
+import values from 'lodash.values';
 import { DAYS_IN_WEEK, MILLISECONDS_IN_ONE_DAY, MONTH_LABELS } from './constants';
 import { shiftDate, getBeginningTimeForDate, convertToDate } from './dateHelpers';
+import { calculateGradientValue } from './colorHelpers';
 
 const SQUARE_SIZE = 10;
 const MONTH_LABEL_GUTTER_SIZE = 4;
@@ -72,8 +74,12 @@ class CalendarHeatmap extends React.Component {
     return this.getWeekWidth() + (this.getMonthLabelSize() - this.props.gutterSize);
   }
 
-  getValueCache(values) {
-    return reduce(values, (memo, value) => {
+  getValueCache(vals) {
+	const counts = vals.map(v => v["count"])
+	const max = Math.max.apply({}, counts)
+	const min = Math.min.apply({}, counts)
+
+    return reduce(vals, (memo, value) => {
       const date = convertToDate(value.date);
       const index = Math.floor((date - this.getStartDateWithEmptyDays()) / MILLISECONDS_IN_ONE_DAY);
       memo[index] = {
@@ -81,9 +87,17 @@ class CalendarHeatmap extends React.Component {
         className: this.props.classForValue(value),
         title: this.props.titleForValue ? this.props.titleForValue(value) : null,
         tooltipDataAttrs: this.getTooltipDataAttrsForValue(value),
+		fillColor: this.getFillColorForValue(value, min, max),
       };
       return memo;
     }, {});
+  }
+
+  getFillColorForValue(value, min, max) {
+	  const { minColor, maxColor } = this.props;
+	  const percent = (value["count"] - min) / (max - min)
+
+	  return calculateGradientValue(minColor, maxColor, percent)
   }
 
   getValueForIndex(index) {
@@ -112,6 +126,13 @@ class CalendarHeatmap extends React.Component {
       return this.state.valueCache[index].tooltipDataAttrs;
     }
     return this.getTooltipDataAttrsForValue({ date: null, count: null });
+  }
+
+  getFillColorForIndex(index) {
+    if (this.state.valueCache[index]) {
+      return this.state.valueCache[index].fillColor;
+    }
+    return "#eeeeee";
   }
 
   getTooltipDataAttrsForValue(value) {
@@ -197,8 +218,8 @@ class CalendarHeatmap extends React.Component {
         height={SQUARE_SIZE}
         x={x}
         y={y}
+		fill={this.getFillColorForIndex(index)}
         title={this.getTitleForIndex(index)}
-        className={this.getClassNameForIndex(index)}
         onClick={this.handleClick.bind(this, this.getValueForIndex(index))}
         onMouseOver={this.handleMouseOver.bind(this, this.getValueForIndex(index))}
         {...this.getTooltipDataAttrsForIndex(index)}
@@ -281,6 +302,8 @@ CalendarHeatmap.defaultProps = {
   showMonthLabels: true,
   showOutOfRangeDays: false,
   classForValue: value => (value ? 'color-filled' : 'color-empty'),
+  minColor: "#d6e685",
+  maxColor: "#1e6823",
 };
 
 export default CalendarHeatmap;

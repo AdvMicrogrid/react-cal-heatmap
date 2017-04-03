@@ -54,6 +54,8 @@
   },
   "dependencies": {
     "lodash.range": "^3.1.4",
-    "lodash.reduce": "^4.3.0"
+    "lodash.reduce": "^4.3.0",
+    "lodash.values": "^4.3.0",
+    "parse-color": "^1.0.0"
   }
 }

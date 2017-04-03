@@ -6,7 +6,7 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 const webpackConfig = {
   context: __dirname,
   entry: {
-    'react-calendar-heatmap': [
+    'react-cal-heatmap': [
       path.resolve(__dirname, 'src', 'index.jsx')
     ]
   },

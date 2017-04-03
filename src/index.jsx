@@ -178,6 +178,12 @@ class CalendarHeatmap extends React.Component {
     }
   }
 
+  handleMouseOver(value) {
+    if (this.props.onMouseOver) {
+      this.props.onMouseOver(value);
+    }
+  }
+
   renderSquare(dayIndex, index) {
     const indexOutOfRange = index < this.getNumEmptyDaysAtStart() || index >= this.getNumEmptyDaysAtStart() + this.props.numDays;
     if (indexOutOfRange && !this.props.showOutOfRangeDays) {
@@ -194,6 +200,7 @@ class CalendarHeatmap extends React.Component {
         title={this.getTitleForIndex(index)}
         className={this.getClassNameForIndex(index)}
         onClick={this.handleClick.bind(this, this.getValueForIndex(index))}
+        onMouseOver={this.handleMouseOver.bind(this, this.getValueForIndex(index))}
         {...this.getTooltipDataAttrsForIndex(index)}
       />
     );

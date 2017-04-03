@@ -40,13 +40,13 @@ if (nodeEnv === 'development') {
   webpackConfig.devtool = 'source-map';
   webpackConfig.debug = true;
   webpackConfig.devServer = { contentBase: './demo'};
-  webpackConfig.entry['react-calendar-heatmap'].unshift('webpack-dev-server/client?http://0.0.0.0:8080/');
-  webpackConfig.entry['react-calendar-heatmap'].push(path.resolve(__dirname, 'demo', 'demo.jsx'));
+  webpackConfig.entry['react-cal-heatmap'].unshift('webpack-dev-server/client?http://0.0.0.0:8080/');
+  webpackConfig.entry['react-cal-heatmap'].push(path.resolve(__dirname, 'demo', 'demo.jsx'));
   webpackConfig.output.publicPath = '/';
 }
 
 if (nodeEnv === 'demo') {
-  webpackConfig.entry['react-calendar-heatmap'].push(path.resolve(__dirname, 'demo', 'demo.jsx'));
+  webpackConfig.entry['react-cal-heatmap'].push(path.resolve(__dirname, 'demo', 'demo.jsx'));
   webpackConfig.output.path = path.resolve(__dirname, 'demo');
 }
 

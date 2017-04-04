@@ -13,5 +13,13 @@ export function calculateGradientValue(minColor, maxColor, percentBetween) {
 	const diffs = [parsedMaxColor[0] - parsedMinColor[0], parsedMaxColor[1] - parsedMinColor[1], parsedMaxColor[2] - parsedMinColor[2]];
 	const finalRGB = [parsedMinColor[0] + Math.round(percentBetween * diffs[0]), parsedMinColor[1] + Math.round(percentBetween * diffs[1]), parsedMinColor[2] + Math.round(percentBetween * diffs[2])];
 
-	return "#" + finalRGB[0].toString(16) + finalRGB[1].toString(16) + finalRGB[2].toString(16);
+	return "#" + generateNumberString(finalRGB[0], 16, 2) + generateNumberString(finalRGB[1], 16, 2) + generateNumberString(finalRGB[2], 16, 2);
+}
+
+export function generateNumberString(num, base, digits) {
+	const convertedNum = num.toString(base)
+	const padding = "0".repeat(digits - 1)
+	const paddedNum = `${padding}${convertedNum}`
+
+	return paddedNum.slice(-1 * digits)
 }

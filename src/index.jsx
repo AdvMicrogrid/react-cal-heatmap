@@ -2,6 +2,7 @@ import React, { PropTypes } from 'react';
 import range from 'lodash.range';
 import reduce from 'lodash.reduce';
 import values from 'lodash.values';
+import get from 'lodash.get';
 import { DAYS_IN_WEEK, MILLISECONDS_IN_ONE_DAY, MONTH_LABELS } from './constants';
 import { shiftDate, getBeginningTimeForDate, convertToDate } from './dateHelpers';
 import { calculateGradientValue } from './colorHelpers';
@@ -76,8 +77,9 @@ class CalendarHeatmap extends React.Component {
 
   getValueCache(vals) {
 	const counts = vals.map(v => v["count"])
-	const max = Math.max.apply({}, counts)
-	const min = Math.min.apply({}, counts)
+	const max = get(this.props, "max", Math.max.apply({}, counts))
+	const min = get(this.props, "min", Math.min.apply({}, counts))
+
 
     return reduce(vals, (memo, value) => {
       const date = convertToDate(value.date);

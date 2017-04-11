@@ -53,10 +53,12 @@
     "react": "^0.14.0 || ^15.0.0"
   },
   "dependencies": {
+    "lodash": "^4.17.4",
     "lodash.get": "^4.4.2",
     "lodash.range": "^3.1.4",
     "lodash.reduce": "^4.3.0",
     "lodash.values": "^4.3.0",
+    "moment": "^2.18.1",
     "parse-color": "^1.0.0"
   }
 }

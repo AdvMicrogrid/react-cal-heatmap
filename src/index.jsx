@@ -3,6 +3,8 @@ import range from 'lodash.range';
 import reduce from 'lodash.reduce';
 import values from 'lodash.values';
 import get from 'lodash.get';
+import _ from 'lodash'
+import moment from "moment"
 import { DAYS_IN_WEEK, MILLISECONDS_IN_ONE_DAY, MONTH_LABELS } from './constants';
 import { shiftDate, getBeginningTimeForDate, convertToDate } from './dateHelpers';
 import { calculateGradientValue } from './colorHelpers';
@@ -15,13 +17,13 @@ class CalendarHeatmap extends React.Component {
     super(props);
 
     this.state = {
-      valueCache: this.getValueCache(props.values),
+      valueCache: this.getValueCache(props.values, props.endDate, props.numDays),
     };
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      valueCache: this.getValueCache(nextProps.values),
+      valueCache: this.getValueCache(nextProps.values, nextProps.endDate, nextProps.numDays),
     });
   }
 
@@ -38,28 +40,28 @@ class CalendarHeatmap extends React.Component {
     return 2 * (SQUARE_SIZE + MONTH_LABEL_GUTTER_SIZE);
   }
 
-  getStartDate() {
-    return shiftDate(this.getEndDate(), -this.props.numDays + 1); // +1 because endDate is inclusive
+  getStartDate(endDate, numDays) {
+    return shiftDate(endDate, -numDays + 1); // +1 because endDate is inclusive
   }
 
   getEndDate() {
     return getBeginningTimeForDate(convertToDate(this.props.endDate));
   }
 
-  getStartDateWithEmptyDays() {
-    return shiftDate(this.getStartDate(), -this.getNumEmptyDaysAtStart());
+  getStartDateWithEmptyDays(endDate, numDays) {
+    return shiftDate(this.getStartDate(endDate, numDays), -this.getNumEmptyDaysAtStart(endDate, numDays));
   }
 
-  getNumEmptyDaysAtStart() {
-    return this.getStartDate().getDay();
+  getNumEmptyDaysAtStart(endDate, numDays) {
+    return this.getStartDate(endDate, numDays).getDay();
   }
 
   getNumEmptyDaysAtEnd() {
     return (DAYS_IN_WEEK - 1) - this.getEndDate().getDay();
   }
 
-  getWeekCount() {
-    const numDaysRoundedToWeek = this.props.numDays + this.getNumEmptyDaysAtStart() + this.getNumEmptyDaysAtEnd();
+  getWeekCount(endDate, numDays) {
+    const numDaysRoundedToWeek = this.props.numDays + this.getNumEmptyDaysAtStart(endDate, numDays) + this.getNumEmptyDaysAtEnd();
     return Math.ceil(numDaysRoundedToWeek / DAYS_IN_WEEK);
   }
 
@@ -67,15 +69,15 @@ class CalendarHeatmap extends React.Component {
     return DAYS_IN_WEEK * this.getSquareSizeWithGutter();
   }
 
-  getWidth() {
-    return (this.getWeekCount() * this.getSquareSizeWithGutter()) - this.props.gutterSize;
+  getWidth(endDate, numDays) {
+    return (this.getWeekCount(endDate, numDays) * this.getSquareSizeWithGutter()) - this.props.gutterSize;
   }
 
   getHeight() {
     return this.getWeekWidth() + (this.getMonthLabelSize() - this.props.gutterSize);
   }
 
-  getValueCache(vals) {
+  getValueCache(vals, endDate, numDays) {
 	const counts = vals.map(v => v["count"])
 	const max = get(this.props, "max", Math.max.apply({}, counts))
 	const min = get(this.props, "min", Math.min.apply({}, counts))
@@ -83,7 +85,7 @@ class CalendarHeatmap extends React.Component {
 
     return reduce(vals, (memo, value) => {
       const date = convertToDate(value.date);
-      const index = Math.floor((date - this.getStartDateWithEmptyDays()) / MILLISECONDS_IN_ONE_DAY);
+      const index = Math.floor((date - this.getStartDateWithEmptyDays(endDate, numDays)) / MILLISECONDS_IN_ONE_DAY);
       memo[index] = {
         value,
         className: this.props.classForValue(value),
@@ -167,11 +169,11 @@ class CalendarHeatmap extends React.Component {
     return null;
   }
 
-  getViewBox() {
+  getViewBox(endDate, numDays) {
     if (this.props.horizontal) {
-      return `0 0 ${this.getWidth()} ${this.getHeight()}`;
+      return `0 0 ${this.getWidth(endDate, numDays)} ${this.getHeight()}`;
     }
-    return `0 0 ${this.getHeight()} ${this.getWidth()}`;
+    return `0 0 ${this.getHeight()} ${this.getWidth(endDate, numDays)}`;
   }
 
   getSquareCoordinates(dayIndex) {
@@ -207,8 +209,21 @@ class CalendarHeatmap extends React.Component {
     }
   }
 
-  renderSquare(dayIndex, index) {
-    const indexOutOfRange = index < this.getNumEmptyDaysAtStart() || index >= this.getNumEmptyDaysAtStart() + this.props.numDays;
+  scroll(oldEndDate, newEndDate) {
+		const diffDays = (moment(newEndDate) - moment(oldEndDate)) / moment.duration(1, "days")
+
+		const cache = _.keys(this.state.valueCache).reduce((newCache, key) => {
+			newCache[key - diffDays] = this.state.valueCache[key]
+			return newCache
+	  }, {})
+
+		this.setState({
+				valueCache: cache
+		})
+  }
+
+  renderSquare(dayIndex, index, endDate, numDays) {
+    const indexOutOfRange = index < this.getNumEmptyDaysAtStart(endDate, numDays) || index >= this.getNumEmptyDaysAtStart(endDate, numDays) + this.props.numDays;
     if (indexOutOfRange && !this.props.showOutOfRangeDays) {
       return null;
     }
@@ -229,25 +244,25 @@ class CalendarHeatmap extends React.Component {
     );
   }
 
-  renderWeek(weekIndex) {
+  renderWeek(weekIndex, endDate, numDays) {
     return (
       <g key={weekIndex} transform={this.getTransformForWeek(weekIndex)}>
-        {range(DAYS_IN_WEEK).map(dayIndex => this.renderSquare(dayIndex, (weekIndex * DAYS_IN_WEEK) + dayIndex))}
+        {range(DAYS_IN_WEEK).map(dayIndex => this.renderSquare(dayIndex, (weekIndex * DAYS_IN_WEEK) + dayIndex), endDate, numDays)}
       </g>
     );
   }
 
-  renderAllWeeks() {
-    return range(this.getWeekCount()).map(weekIndex => this.renderWeek(weekIndex));
+  renderAllWeeks(endDate, numDays) {
+    return range(this.getWeekCount(endDate, numDays)).map(weekIndex => this.renderWeek(weekIndex, endDate, numDays));
   }
 
-  renderMonthLabels() {
-    if (!this.props.showMonthLabels) {
+  renderMonthLabels(endDate, numDays, showMonthLabels) {
+    if (!showMonthLabels) {
       return null;
     }
-    const weekRange = range(this.getWeekCount() - 1);  // don't render for last week, because label will be cut off
+    const weekRange = range(this.getWeekCount(endDate, numDays) - 1);  // don't render for last week, because label will be cut off
     return weekRange.map((weekIndex) => {
-      const endOfWeek = shiftDate(this.getStartDateWithEmptyDays(), (weekIndex + 1) * DAYS_IN_WEEK);
+      const endOfWeek = shiftDate(this.getStartDateWithEmptyDays(endDate, numDays), (weekIndex + 1) * DAYS_IN_WEEK);
       const [x, y] = this.getMonthLabelCoordinates(weekIndex);
       return (endOfWeek.getDate() >= 1 && endOfWeek.getDate() <= DAYS_IN_WEEK) ? (
         <text
@@ -262,16 +277,17 @@ class CalendarHeatmap extends React.Component {
   }
 
   render() {
+	const { endDate, numDays, showMonthLabels } = this.props
     return (
       <svg
         className="react-calendar-heatmap"
-        viewBox={this.getViewBox()}
+        viewBox={this.getViewBox(endDate, numDays)}
       >
         <g transform={this.getTransformForMonthLabels()}>
-          {this.renderMonthLabels()}
+          {this.renderMonthLabels(endDate, numDays, showMonthLabels)}
         </g>
         <g transform={this.getTransformForAllWeeks()}>
-          {this.renderAllWeeks()}
+          {this.renderAllWeeks(endDate, numDays)}
         </g>
       </svg>
     );

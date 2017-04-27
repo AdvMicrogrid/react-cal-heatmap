@@ -18,13 +18,14 @@ class CalendarHeatmap extends React.Component {
 
     this.state = {
       valueCache: this.getValueCache(props.values, props.endDate, props.numDays),
-    };
+      dragging: false
+    }
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       valueCache: this.getValueCache(nextProps.values, nextProps.endDate, nextProps.numDays),
-    });
+    })
   }
 
   getSquareSizeWithGutter() {
@@ -197,15 +198,44 @@ class CalendarHeatmap extends React.Component {
     ];
   }
 
-  handleClick(value) {
+  handleClick(e, value) {
     if (this.props.onClick) {
-      this.props.onClick(value);
+      this.props.onClick(value)
+      e.preventDefault()
     }
   }
 
-  handleMouseOver(value) {
+  handleMouseOver(e, value) {
     if (this.props.onMouseOver) {
-      this.props.onMouseOver(value);
+      this.props.onMouseOver(value)
+    }
+
+    if (this.state.dragging) {
+      this.setState({
+        dragEnd: value
+      })
+      e.preventDefault()
+    }
+  }
+
+  handleMouseDown(e, value) {
+    if (this.props.onDrag) {
+      this.setState({
+        dragStart: value,
+        dragging: true
+      })
+      e.preventDefault()
+    }
+  }
+
+  handleMouseUp(e, value) {
+    if (this.props.onDrag) {
+      this.props.onDrag(this.state.dragStart, value)
+      this.setState({
+        dragStart: null,
+        dragEnd: null,
+        dragging: false
+      })
     }
   }
 
@@ -222,6 +252,18 @@ class CalendarHeatmap extends React.Component {
 		})
   }
 
+  draggedOver(index) {
+    if (this.state.dragging && this.state.dragStart && this.state.dragEnd && this.state.valueCache[index]) {
+      const date = moment(this.state.valueCache[index].value.date)
+      const start = moment(this.state.dragStart.date)
+      const end = moment(this.state.dragEnd.date)
+
+      return moment.min(start, end) <= date && date <= moment.max(start, end)
+    } else {
+      return false
+    }
+  }
+
   renderSquare(dayIndex, index, endDate, numDays) {
     const indexOutOfRange = index < this.getNumEmptyDaysAtStart(endDate, numDays) || index >= this.getNumEmptyDaysAtStart(endDate, numDays) + this.props.numDays;
     if (indexOutOfRange && !this.props.showOutOfRangeDays) {
@@ -231,14 +273,18 @@ class CalendarHeatmap extends React.Component {
     return (
       <rect
         key={index}
+        stroke={"white"}
+        strokeWidth={this.draggedOver(index) ? 2 : 0}
         width={SQUARE_SIZE}
         height={SQUARE_SIZE}
         x={x}
         y={y}
-		fill={this.getFillColorForIndex(index)}
+	      fill={this.getFillColorForIndex(index)}
         title={this.getTitleForIndex(index)}
-        onClick={this.handleClick.bind(this, this.getValueForIndex(index))}
-        onMouseOver={this.handleMouseOver.bind(this, this.getValueForIndex(index))}
+        onClick={(e) => this.handleClick(e, this.getValueForIndex(index))}
+        onMouseOver={(e) => this.handleMouseOver(e, this.getValueForIndex(index))}
+        onMouseDown={(e) => this.handleMouseDown(e, this.getValueForIndex(index))}
+        onMouseUp={(e) => this.handleMouseUp(e, this.getValueForIndex(index))}
         {...this.getTooltipDataAttrsForIndex(index)}
       />
     );
@@ -277,7 +323,8 @@ class CalendarHeatmap extends React.Component {
   }
 
   render() {
-	const { endDate, numDays, showMonthLabels } = this.props
+	  const { endDate, numDays, showMonthLabels } = this.props
+
     return (
       <svg
         className="react-calendar-heatmap"

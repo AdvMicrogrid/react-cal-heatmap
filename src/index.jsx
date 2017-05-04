@@ -79,9 +79,9 @@ class CalendarHeatmap extends React.Component {
   }
 
   getValueCache(vals, endDate, numDays) {
-	const counts = vals.map(v => v["count"])
-	const max = get(this.props, "max", Math.max.apply({}, counts))
-	const min = get(this.props, "min", Math.min.apply({}, counts))
+  	const counts = vals.map(v => v["count"])
+  	const max = get(this.props, "max", Math.max.apply({}, counts))
+  	const min = get(this.props, "min", Math.min.apply({}, counts))
 
 
     return reduce(vals, (memo, value) => {
@@ -92,7 +92,7 @@ class CalendarHeatmap extends React.Component {
         className: this.props.classForValue(value),
         title: this.props.titleForValue ? this.props.titleForValue(value) : null,
         tooltipDataAttrs: this.getTooltipDataAttrsForValue(value),
-		fillColor: this.getFillColorForValue(value, min, max),
+	      fillColor: this.getFillColorForValue(value, min, max),
       };
       return memo;
     }, {});
@@ -109,7 +109,10 @@ class CalendarHeatmap extends React.Component {
     if (this.state.valueCache[index]) {
       return this.state.valueCache[index].value;
     }
-    return null;
+
+    const date = moment(this.props.endDate).subtract(this.props.numDays - index, 'days').toDate()
+
+    return { date, count: null }
   }
 
   getClassNameForIndex(index) {
@@ -324,7 +327,6 @@ class CalendarHeatmap extends React.Component {
 
   render() {
 	  const { endDate, numDays, showMonthLabels } = this.props
-
     return (
       <svg
         className="react-calendar-heatmap"

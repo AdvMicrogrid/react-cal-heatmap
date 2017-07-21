@@ -80,8 +80,8 @@ class CalendarHeatmap extends React.Component {
 
   getValueCache(vals, endDate, numDays) {
   	const counts = vals.map(v => v["count"])
-  	const max = get(this.props, "max", Math.max.apply({}, counts))
-  	const min = get(this.props, "min", Math.min.apply({}, counts))
+  	const max = get(this.props, "max", _.max(counts))
+  	const min = get(this.props, "min", _.min(counts))
 
 
     return reduce(vals, (memo, value) => {

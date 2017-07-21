@@ -102,7 +102,11 @@ class CalendarHeatmap extends React.Component {
 	  const { minColor, maxColor } = this.props;
 	  const percent = (value["count"] - min) / (max - min)
 
-	  return calculateGradientValue(minColor, maxColor, percent)
+		if (_.isFinite(percent)) {
+			return calculateGradientValue(minColor, maxColor, percent)
+		} else {
+			return '#eeeeee'
+		}
   }
 
   getValueForIndex(index) {

@@ -80,8 +80,8 @@ class CalendarHeatmap extends React.Component {
 
   getValueCache(vals, endDate, numDays) {
   	const counts = vals.map(v => v["count"])
-  	const max = get(this.props, "max", _.max(counts))
-  	const min = get(this.props, "min", _.min(counts))
+  	const max = get(this.props, "max", _.max(counts.filter(c => _.isFinite(c))))
+  	const min = get(this.props, "min", _.min(counts.filter(c => _.isFinite(c))))
 
 
     return reduce(vals, (memo, value) => {
@@ -93,6 +93,7 @@ class CalendarHeatmap extends React.Component {
         title: this.props.titleForValue ? this.props.titleForValue(value) : null,
         tooltipDataAttrs: this.getTooltipDataAttrsForValue(value),
 	      fillColor: this.getFillColorForValue(value, min, max),
+        event: this.props.events.includes(value.date)
       };
       return memo;
     }, {});
@@ -271,6 +272,23 @@ class CalendarHeatmap extends React.Component {
     }
   }
 
+  getStroke(index) {
+    if (this.draggedOver(index))
+      return "white"
+
+    if (this.state.valueCache[index] && this.state.valueCache[index].event)
+      return "black"
+  }
+
+  getStrokeWidth(index) {
+    if (this.draggedOver(index))
+      return 2
+
+    if (this.state.valueCache[index] && this.state.valueCache[index].event)
+      return 1
+    return 0
+  }
+
   renderSquare(dayIndex, index, endDate, numDays) {
     const indexOutOfRange = index < this.getNumEmptyDaysAtStart(endDate, numDays) || index >= this.getNumEmptyDaysAtStart(endDate, numDays) + this.props.numDays;
     if (indexOutOfRange && !this.props.showOutOfRangeDays) {
@@ -280,8 +298,8 @@ class CalendarHeatmap extends React.Component {
     return (
       <rect
         key={index}
-        stroke={"white"}
-        strokeWidth={this.draggedOver(index) ? 2 : 0}
+        stroke={this.getStroke(index)}
+        strokeWidth={this.getStrokeWidth(index)}
         width={SQUARE_SIZE}
         height={SQUARE_SIZE}
         x={x}

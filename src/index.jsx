@@ -93,7 +93,7 @@ class CalendarHeatmap extends React.Component {
         title: this.props.titleForValue ? this.props.titleForValue(value) : null,
         tooltipDataAttrs: this.getTooltipDataAttrsForValue(value),
 	      fillColor: this.getFillColorForValue(value, min, max),
-        event: this.props.events.includes(value.date)
+        event: _.get(this, ['props', 'events'], []).includes(value.date)
       };
       return memo;
     }, {});

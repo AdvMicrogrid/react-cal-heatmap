@@ -7994,7 +7994,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          title: _this2.props.titleForValue ? _this2.props.titleForValue(value) : null,
 	          tooltipDataAttrs: _this2.getTooltipDataAttrsForValue(value),
 	          fillColor: _this2.getFillColorForValue(value, min, max),
-	          event: _this2.props.events.includes(value.date)
+	          event: _lodash10.default.get(_this2, ['props', 'events'], []).includes(value.date)
 	        };
 	        return memo;
 	      }, {});

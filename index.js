@@ -7978,12 +7978,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var counts = vals.map(function (v) {
 	        return v["count"];
 	      });
-	      var max = (0, _lodash8.default)(this.props, "max", _lodash10.default.max(counts.filter(function (c) {
-	        return _lodash10.default.isFinite(c);
-	      })));
-	      var min = (0, _lodash8.default)(this.props, "min", _lodash10.default.min(counts.filter(function (c) {
-	        return _lodash10.default.isFinite(c);
-	      })));
+	      var max = (0, _lodash8.default)(this.props, "max", Math.max.apply({}, counts));
+	      var min = (0, _lodash8.default)(this.props, "min", Math.min.apply({}, counts));
 	
 	      return (0, _lodash4.default)(vals, function (memo, value) {
 	        var date = (0, _dateHelpers.convertToDate)(value.date);
@@ -7993,8 +7989,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          className: _this2.props.classForValue(value),
 	          title: _this2.props.titleForValue ? _this2.props.titleForValue(value) : null,
 	          tooltipDataAttrs: _this2.getTooltipDataAttrsForValue(value),
-	          fillColor: _this2.getFillColorForValue(value, min, max),
-	          event: _lodash10.default.get(_this2, ['props', 'events'], []).includes(value.date)
+	          fillColor: _this2.getFillColorForValue(value, min, max)
 	        };
 	        return memo;
 	      }, {});
@@ -8008,11 +8003,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	      var percent = (value["count"] - min) / (max - min);
 	
-	      if (_lodash10.default.isFinite(percent)) {
-	        return (0, _colorHelpers.calculateGradientValue)(minColor, maxColor, percent);
-	      } else {
-	        return '#eeeeee';
-	      }
+	      return (0, _colorHelpers.calculateGradientValue)(minColor, maxColor, percent);
 	    }
 	  }, {
 	    key: 'getValueForIndex',
@@ -8128,6 +8119,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'handleMouseOver',
 	    value: function handleMouseOver(e, value) {
+	      this.setState({
+	        hoverDate: value
+	      });
+	
 	      if (this.props.onMouseOver) {
 	        this.props.onMouseOver(value);
 	      }
@@ -8192,21 +8187,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 	  }, {
-	    key: 'getStroke',
-	    value: function getStroke(index) {
-	      if (this.draggedOver(index)) return "white";
-	
-	      if (this.state.valueCache[index] && this.state.valueCache[index].event) return "black";
-	    }
-	  }, {
-	    key: 'getStrokeWidth',
-	    value: function getStrokeWidth(index) {
-	      if (this.draggedOver(index)) return 2;
-	
-	      if (this.state.valueCache[index] && this.state.valueCache[index].event) return 1;
-	      return 0;
-	    }
-	  }, {
 	    key: 'renderSquare',
 	    value: function renderSquare(dayIndex, index, endDate, numDays) {
 	      var _this4 = this;
@@ -8221,29 +8201,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	          x = _getSquareCoordinates2[0],
 	          y = _getSquareCoordinates2[1];
 	
-	      return _react2.default.createElement('rect', _extends({
-	        key: index,
-	        stroke: this.getStroke(index),
-	        strokeWidth: this.getStrokeWidth(index),
-	        width: SQUARE_SIZE,
-	        height: SQUARE_SIZE,
-	        x: x,
-	        y: y,
-	        fill: this.getFillColorForIndex(index),
-	        title: this.getTitleForIndex(index),
-	        onClick: function onClick(e) {
-	          return _this4.handleClick(e, _this4.getValueForIndex(index));
-	        },
-	        onMouseOver: function onMouseOver(e) {
-	          return _this4.handleMouseOver(e, _this4.getValueForIndex(index));
-	        },
-	        onMouseDown: function onMouseDown(e) {
-	          return _this4.handleMouseDown(e, _this4.getValueForIndex(index));
-	        },
-	        onMouseUp: function onMouseUp(e) {
-	          return _this4.handleMouseUp(e, _this4.getValueForIndex(index));
-	        }
-	      }, this.getTooltipDataAttrsForIndex(index)));
+	      var value = this.getValueForIndex(index);
+	      return _react2.default.createElement(
+	        'g',
+	        null,
+	        _react2.default.createElement('rect', _extends({
+	          key: index,
+	          stroke: "white",
+	          strokeWidth: this.draggedOver(index) ? 2 : 0,
+	          width: SQUARE_SIZE,
+	          height: SQUARE_SIZE,
+	          x: x,
+	          y: y,
+	          fill: this.getFillColorForIndex(index),
+	          title: this.getTitleForIndex(index),
+	          onClick: function onClick(e) {
+	            return _this4.handleClick(e, value);
+	          },
+	          onMouseOver: function onMouseOver(e) {
+	            return _this4.handleMouseOver(e, value);
+	          },
+	          onMouseDown: function onMouseDown(e) {
+	            return _this4.handleMouseDown(e, value);
+	          },
+	          onMouseUp: function onMouseUp(e) {
+	            return _this4.handleMouseUp(e, value);
+	          }
+	        }, this.getTooltipDataAttrsForIndex(index)))
+	      );
 	    }
 	  }, {
 	    key: 'renderWeek',
@@ -8254,8 +8239,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        'g',
 	        { key: weekIndex, transform: this.getTransformForWeek(weekIndex) },
 	        (0, _lodash2.default)(_constants.DAYS_IN_WEEK).map(function (dayIndex) {
-	          return _this5.renderSquare(dayIndex, weekIndex * _constants.DAYS_IN_WEEK + dayIndex);
-	        }, endDate, numDays)
+	          return _this5.renderSquare(dayIndex, weekIndex * _constants.DAYS_IN_WEEK + dayIndex, endDate, numDays);
+	        })
 	      );
 	    }
 	  }, {

@@ -80,8 +80,8 @@ class CalendarHeatmap extends React.Component {
 
   getValueCache(vals, endDate, numDays) {
   	const counts = vals.map(v => v["count"])
-  	const max = get(this.props, "max", _.max(counts.filter(c => _.isFinite(c))))
-  	const min = get(this.props, "min", _.min(counts.filter(c => _.isFinite(c))))
+  	const max = get(this.props, "max", Math.max.apply({}, counts))
+  	const min = get(this.props, "min", Math.min.apply({}, counts))
 
 
     return reduce(vals, (memo, value) => {
@@ -93,7 +93,6 @@ class CalendarHeatmap extends React.Component {
         title: this.props.titleForValue ? this.props.titleForValue(value) : null,
         tooltipDataAttrs: this.getTooltipDataAttrsForValue(value),
 	      fillColor: this.getFillColorForValue(value, min, max),
-        event: _.get(this, ['props', 'events'], []).includes(value.date)
       };
       return memo;
     }, {});
@@ -103,11 +102,7 @@ class CalendarHeatmap extends React.Component {
 	  const { minColor, maxColor } = this.props;
 	  const percent = (value["count"] - min) / (max - min)
 
-		if (_.isFinite(percent)) {
-			return calculateGradientValue(minColor, maxColor, percent)
-		} else {
-			return '#eeeeee'
-		}
+	  return calculateGradientValue(minColor, maxColor, percent)
   }
 
   getValueForIndex(index) {
@@ -214,6 +209,10 @@ class CalendarHeatmap extends React.Component {
   }
 
   handleMouseOver(e, value) {
+    this.setState({
+      hoverDate: value
+    })
+
     if (this.props.onMouseOver) {
       this.props.onMouseOver(value)
     }
@@ -272,53 +271,39 @@ class CalendarHeatmap extends React.Component {
     }
   }
 
-  getStroke(index) {
-    if (this.draggedOver(index))
-      return "white"
-
-    if (this.state.valueCache[index] && this.state.valueCache[index].event)
-      return "black"
-  }
-
-  getStrokeWidth(index) {
-    if (this.draggedOver(index))
-      return 2
-
-    if (this.state.valueCache[index] && this.state.valueCache[index].event)
-      return 1
-    return 0
-  }
-
   renderSquare(dayIndex, index, endDate, numDays) {
     const indexOutOfRange = index < this.getNumEmptyDaysAtStart(endDate, numDays) || index >= this.getNumEmptyDaysAtStart(endDate, numDays) + this.props.numDays;
     if (indexOutOfRange && !this.props.showOutOfRangeDays) {
       return null;
     }
     const [x, y] = this.getSquareCoordinates(dayIndex);
+    const value = this.getValueForIndex(index)
     return (
-      <rect
-        key={index}
-        stroke={this.getStroke(index)}
-        strokeWidth={this.getStrokeWidth(index)}
-        width={SQUARE_SIZE}
-        height={SQUARE_SIZE}
-        x={x}
-        y={y}
-	      fill={this.getFillColorForIndex(index)}
-        title={this.getTitleForIndex(index)}
-        onClick={(e) => this.handleClick(e, this.getValueForIndex(index))}
-        onMouseOver={(e) => this.handleMouseOver(e, this.getValueForIndex(index))}
-        onMouseDown={(e) => this.handleMouseDown(e, this.getValueForIndex(index))}
-        onMouseUp={(e) => this.handleMouseUp(e, this.getValueForIndex(index))}
-        {...this.getTooltipDataAttrsForIndex(index)}
-      />
+      <g>
+        <rect
+          key={index}
+          stroke={"white"}
+          strokeWidth={this.draggedOver(index) ? 2 : 0}
+          width={SQUARE_SIZE}
+          height={SQUARE_SIZE}
+          x={x}
+          y={y}
+  	      fill={this.getFillColorForIndex(index)}
+          title={this.getTitleForIndex(index)}
+          onClick={(e) => this.handleClick(e, value)}
+          onMouseOver={(e) => this.handleMouseOver(e, value)}
+          onMouseDown={(e) => this.handleMouseDown(e, value)}
+          onMouseUp={(e) => this.handleMouseUp(e, value)}
+          {...this.getTooltipDataAttrsForIndex(index)}
+        />
+      </g>
     );
   }
 
   renderWeek(weekIndex, endDate, numDays) {
     return (
       <g key={weekIndex} transform={this.getTransformForWeek(weekIndex)}>
-        {range(DAYS_IN_WEEK).map(dayIndex => this.renderSquare(dayIndex, (weekIndex * DAYS_IN_WEEK) + dayIndex), endDate, numDays)}
+        {range(DAYS_IN_WEEK).map(dayIndex => this.renderSquare(dayIndex, weekIndex * DAYS_IN_WEEK + dayIndex, endDate, numDays))}
       </g>
     );
   }
